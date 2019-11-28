@@ -4,8 +4,17 @@ library(DT)
 library(data.table)
 library(datasets)
 library(shinyalert)
+library(shinyjs)
 
+dataFrameList <- c("0")
+datasetList <- sort(gsub("\\ .*","",data(package = "datasets")$results[, "Item"]))
 
+for(i in datasetList) {
+  if(is.data.frame(get(i))) {
+    dataFrameList <- c(dataFrameList, i)
+  }
+}
+dataFrameList <- dataFrameList[-1]
 
 shinyUI(
     dashboardPage(skin = "black",
@@ -30,6 +39,7 @@ shinyUI(
     ),
     dashboardBody(
       useShinyalert(),
+      useShinyjs(),
       tabItems(
         tabItem(tabName = "dpm_gen",
                 sidebarPanel(
@@ -150,7 +160,7 @@ shinyUI(
                                                )
                                    ),
                   conditionalPanel(condition = "input.cpm_imp_source == 'inBuilt'",
-                                   selectInput("cpm_ibds", "Select Dataset", sort(gsub("\\ .*","",data(package = "datasets")$results[, "Item"])))
+                                   selectInput("cpm_ibds", "Select Dataset", dataFrameList)
                                    ),
                   selectInput("cpm_imp_cols", "Select a Column", choices = ""),
                   selectInput("cpm_imp_input", "Select Model", c("Uniform", "Normal", "Exponential", "Gamma"), selectize = TRUE),
