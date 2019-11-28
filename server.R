@@ -586,7 +586,7 @@ shinyServer(
              print("Character values present! Please select another column")
            } else if(any(temp_list$impTemp_col < 0)) {
              print("Please select a column with Positive values")
-           } else if(any(temp_list$impTemp_col%%1 != 0)) {
+           } else if(any(temp_list$impTemp_col%%1 != 0) | any(temp_list$impTemp_col%%1 == 0)) {
              print(paste("Predicted Value: ", mean(runif(input$cpm_imp_s, min = min(temp_list$impTemp_col), max = max(temp_list$impTemp_col))) ))
            } else {
              print("Please select a column with continuous values")
@@ -595,7 +595,7 @@ shinyServer(
            
            if(is.character(temp_list$impTemp_col) | is.factor(temp_list$impTemp_col)) {
              print("Character values present! Please select another column")
-           } else if(any(temp_list$impTemp_col%%1 != 0)) {
+           } else if(any(temp_list$impTemp_col%%1 != 0) | any(temp_list$impTemp_col%%1 == 0)) {
              print(paste("Predicted Value: ", mean(rnorm(input$cpm_imp_s, mean(temp_list$impTemp_col), sd(temp_list$impTemp_col))) ))
            } else {
              print("Please select a column with continuous values")
@@ -606,7 +606,7 @@ shinyServer(
              print("Character values present! Please select another column")
            } else if(any(temp_list$impTemp_col < 0)) {
              print("Please select a column with Positive values")
-           } else if(any(temp_list$impTemp_col%%1 != 0)) {
+           } else if(any(temp_list$impTemp_col%%1 != 0) | any(temp_list$impTemp_col%%1 == 0)) {
              print(paste("Predicted Value: ", mean(rexp(input$cpm_imp_s, 1/mean(temp_list$impTemp_col))) ))
            } else {
              print("Please select a column with continuous values")
@@ -617,7 +617,7 @@ shinyServer(
              print("Character values present! Please select another column")
            } else if(any(temp_list$impTemp_col < 0)) {
              print("Please select a column with Positive values")
-           } else if(any(temp_list$impTemp_col%%1 != 0)) {
+           } else if(any(temp_list$impTemp_col%%1 != 0) | any(temp_list$impTemp_col%%1 == 0)) {
              print(paste("Predicted Value: ", mean(rgamma(input$cpm_imp_s, input$imp_gamma_alpha, 1/mean(temp_list$impTemp_col))) ))
            } else {
              print("Please select a column with continuous values")
