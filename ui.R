@@ -28,7 +28,6 @@ shinyUI(
       
       sidebarMenu(
         menuItem("Discrete Probability Models", tabName = "dpm",
-                 menuSubItem("Import Dataset", tabName = "dpm_imp", icon = icon("minus")),
                  menuSubItem("Generate Data", tabName = "dpm_gen", icon = icon("minus"))
                  ),
         menuItem("Continuous Probability Models", tabName = "cpm",
@@ -87,14 +86,9 @@ shinyUI(
                   )
                 )
                 ),
-        # tabItem(tabName = "dpm_imp",
-        #         sidebarPanel(
-        #           
-        #         )
-        #         ),
         tabItem(tabName = "cpm_gen",
                 sidebarPanel(
-                  selectInput("cpm_gen_input", "Select Model", c("Uniform", "Normal", "Exponential", "Gamma", "Chi-Squared", "Beta", "Students T", "F"), selectize = TRUE),
+                  selectInput("cpm_gen_input", "Select Model", c("Uniform", "Normal", "Exponential", "Gamma", "Chi-Squared"), selectize = TRUE),
                   
                   numericInput("cpm_gen_s", "No. of simulated data", min = 1, max = 1000, value = 10),
                   conditionalPanel(condition = "input.cpm_gen_input == 'Uniform'",
@@ -124,9 +118,6 @@ shinyUI(
                                    numericInput("chisq_j", "Value of j >= 0", value = 0),
                                    numericInput("chisq_i", "Support : i", value = 2)
                                    ),
-                  conditionalPanel(condition = "input.cpm_gen_input == 'Beta'", h5("Input data for Beta Model")),
-                  conditionalPanel(condition = "input.cpm_gen_input == 'Students T'", h5("Input data for Students T Model")),
-                  conditionalPanel(condition = "input.cpm_gen_input == 'F'", h5("Input data for F Model")),
                   actionButton("cpm_gen_btn", "Submit")
                 ), mainPanel(
                    hr(),
