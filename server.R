@@ -5,6 +5,7 @@ library(data.table)
 library(datasets)
 library(shinyalert)
 library(shinyjs)
+library(pdfetch)
 
 shinyServer(
   function(input, output, session) {
@@ -626,6 +627,292 @@ shinyServer(
        })
       })
     })
+    
+    observeEvent(input$mean_btn, {
+      
+      output$ref_tab <- renderUI({
+        tags$iframe(style = "height:525px; width:100%", src = "Z-table.pdf")
+      })
+      
+      output$ht_plot <- renderPlot({
+        
+        input$mean_btn
+        isolate({
+          
+          mean_list <- switch(input$ht_source,
+                              
+                              mean_input = {
+                                new_list <- list(mean = input$mean_mu, sd = input$mean_sigma, alpha = input$mean_alpha)
+                              },
+                              mean_file = { 
+                                
+                              },
+                              mean_url = { 
+                                
+                              },
+                              mean_inBuilt = { 
+                                
+                              },
+                              mean_yfin = {
+                                
+                              })
+          
+            switch(input$mean_rb, 
+                   meanInput_left = {
+                     
+                     mean <- mean_list$mean 
+                     sd <- mean_list$sd
+                     lb <- -(mean + (4*sd))
+                     ub <- qnorm(mean_list$alpha)
+                     
+                     x <- seq(-(mean + (4*sd)), (mean + (4*sd)), length = 100)
+                     hx <- dnorm(x, mean, sd)
+                     
+                     plot(x, hx, type = "l", xlab = "", ylab = "",
+                          main = "Normal Distribution", axes = FALSE)
+                     
+                     i <- x >= lb & x <= ub
+                     polygon(c(lb, x[i], ub), c(0, hx[i], 0), col = "red")
+                     
+                     area <- pnorm(ub, mean, sd) - pnorm(lb, mean, sd)
+                     result <- paste("Mean = ", mean, ", SD = ", sd, ", Area",
+                                     signif(area, digits = 3))
+                     mtext(result, 3)
+                     axis(1, 
+                          at = c(-(mean + (4*sd)), 
+                                 (mean + (4*sd)),
+                                 qnorm(mean_list$alpha)),
+                          labels = c(signif(-(mean + (4*sd)), digits = 1), 
+                                     signif((mean + (4*sd)), digits = 1), 
+                                     qnorm(mean_list$alpha)
+                          ))
+                   },
+                   meanInput_right = {
+                     
+                     mean <- mean_list$mean 
+                     sd <- mean_list$sd
+                     lb <- qnorm(1 - mean_list$alpha)
+                     ub <- (mean + (4*sd))
+                     
+                     x <- seq(-(mean + (4*sd)), (mean + (4*sd)), length = 100)
+                     hx <- dnorm(x, mean, sd)
+                     
+                     plot(x, hx, type = "l", xlab = "", ylab = "",
+                          main = "Normal Distribution", axes = FALSE)
+                     
+                     i <- x >= lb & x <= ub
+                     polygon(c(lb, x[i], ub), c(0, hx[i], 0), col = "red")
+                     
+                     area <- pnorm(ub, mean, sd) - pnorm(lb, mean, sd)
+                     result <- paste("Mean = ", mean, ", SD = ", sd, ", Area",
+                                     signif(area, digits = 3))
+                     mtext(result, 3)
+                     axis(1, 
+                          at = c(-(mean + (4*sd)), 
+                                 (mean + (4*sd)),
+                                 qnorm(1 - mean_list$alpha)),
+                          labels = c(signif(-(mean + (4*sd)), digits = 1), 
+                                     signif((mean + (4*sd)), digits = 1), 
+                                     qnorm(1 - mean_list$alpha)
+                          ))
+                     
+                   },
+                   meanInput_two = {
+                     
+                     mean <- mean_list$mean 
+                     sd <- mean_list$sd
+                     lb1 <- -(mean + (4*sd))
+                     ub1 <- qnorm(mean_list$alpha/2)
+                     lb2 <- qnorm(1 - (mean_list$alpha/2))
+                     ub2 <- (mean + (4*sd))
+                     
+                     x <- seq(-(mean + (4*sd)), (mean + (4*sd)), length = 100)
+                     hx <- dnorm(x, mean, sd)
+                     
+                     plot(x, hx, type = "l", xlab = "", ylab = "",
+                          main = "Normal Distribution", axes = FALSE)
+                     
+                     i1 <- x >= lb1 & x <= ub1
+                     i2 <- x >= lb2 & x <= ub2
+                     polygon(c(lb1, x[i1], ub1), c(0, hx[i1], 0), col = "red")
+                     polygon(c(lb2, x[i2], ub2), c(0, hx[i2], 0), col = "red")
+                     
+                     area <- (pnorm(ub1, mean, sd) - pnorm(lb1, mean, sd)) + (pnorm(ub2, mean, sd) - pnorm(lb2, mean, sd))
+                     result <- paste("Mean = ", mean, ", SD = ", sd, ", Area",
+                                     signif(area, digits = 3))
+                     mtext(result, 3)
+                     axis(1, 
+                          at = c(-(mean + (4*sd)), 
+                                 (mean + (4*sd)),
+                                 qnorm(1 - (mean_list$alpha/2)),
+                                 qnorm(mean_list$alpha/2)),
+                          labels = c(signif(-(mean + (4*sd)), digits = 1),
+                                     signif((mean + (4*sd)), digits = 1), 
+                                     qnorm(1 - (mean_list$alpha/2)),
+                                     qnorm(mean_list$alpha/2))
+                          )
+                   })
+          
+        })
+      })
+      
+      output$ht_decision <- renderPrint({
+        
+        input$mean_btn
+        isolate({
+          
+          decisionList <- switch(input$ht_source,
+                 
+                 mean_input = {
+                   temp <- list(mean = input$mean_mu, sd = input$mean_sigma, xbar = input$mean_xbar, n = input$mean_n, alpha = input$mean_alpha)
+                 },
+                 mean_file = { 
+                   
+                 },
+                 mean_url = { 
+                   
+                 },
+                 mean_inBuilt = { 
+                   
+                 },
+                 mean_yfin = {
+                   
+                 })
+          
+          switch (input$mean_rb,
+                  meanInput_left = {
+                    
+                    if(input$ht_source == "mean_input") {
+                      
+                      
+                      test_value <- (decisionList$xbar - decisionList$mean)/(decisionList$sd/sqrt(decisionList$n))
+                      c_value <- qnorm(decisionList$alpha)
+
+                      if(test_value < c_value) {
+                        print("Reject Ho")
+                      } else {
+                        print("Accept Ho")
+                      }
+                      
+                    } else {
+                      
+                    }
+                  },
+                  meanInput_right = {
+                    
+                    if(input$ht_source == "mean_input") {
+                      
+                      test_value <- (decisionList$xbar - decisionList$mean)/(decisionList$sd/sqrt(decisionList$n))
+                      c_value <- qnorm(1 - decisionList$alpha) 
+                      
+                      if(test_value < c_value) {
+                        print("Accept Ho")
+                      } else {
+                        print("Reject Ho")
+                      }
+                      
+                    } else {
+                      
+                    }
+                  },
+                  meanInput_two = {
+                    
+                    if(input$ht_source == "mean_input") {
+                      
+                      test_value <- (decisionList$xbar - decisionList$mean)/(decisionList$sd/sqrt(decisionList$n))
+                      c_value <- qnorm(1 - decisionList$alpha/2) 
+                      
+                      if(abs(test_value) >= abs(c_value)) {
+                        print("Reject Ho")
+                      } else {
+                        print("Accept Ho")
+                      }
+                      
+                    } else {
+                      
+                    }
+                  }
+          )
+        })
+      })
+      
+      output$ht_result <- renderPrint({
+        
+        input$mean_btn
+        isolate({
+          
+          resultList <- switch(input$ht_source,
+                                 
+                                 mean_input = {
+                                   temp <- list(mean = input$mean_mu, sd = input$mean_sigma, xbar = input$mean_xbar, n = input$mean_n, alpha = input$mean_alpha)
+                                 },
+                                 mean_file = { 
+                                   
+                                 },
+                                 mean_url = { 
+                                   
+                                 },
+                                 mean_inBuilt = { 
+                                   
+                                 },
+                                 mean_yfin = {
+                                   
+                                 })
+          
+          switch (input$mean_rb,
+                  meanInput_left = {
+                    
+                    if(input$ht_source == "mean_input") {
+                      
+                      
+                      test_value <- (resultList$xbar - resultList$mean)/(resultList$sd/sqrt(resultList$n))
+                      c_value <- qnorm(resultList$alpha)
+                      
+                      print(paste("Test - Value :", test_value))
+                      br()
+                      print(paste("Critical - Value :", c_value))
+                    } else {
+                      
+                    }
+                  },
+                  meanInput_right = {
+                    
+                    if(input$ht_source == "mean_input") {
+                      
+                      test_value <- (resultList$xbar - resultList$mean)/(resultList$sd/sqrt(resultList$n))
+                      c_value <- qnorm(1 - resultList$alpha) 
+                      
+                      print(paste("Test - Value :", test_value))
+                      br()
+                      print(paste("Critical - Value :", c_value))
+                      
+                    } else {
+                      
+                    }
+                  },
+                  meanInput_two = {
+                    
+                    if(input$ht_source == "mean_input") {
+                      
+                      test_value <- (resultList$xbar - resultList$mean)/(resultList$sd/sqrt(resultList$n))
+                      c_value <- qnorm(1 - resultList$alpha/2) 
+                      
+                      print(paste("Test - Value :", test_value))
+                      br()
+                      print(paste("Critical - Value :", c_value))
+                      
+                    } else {
+                      
+                    }
+                  }
+          )
+        })
+      })
+      
+    })
+    
+    
   }
 )
+
 

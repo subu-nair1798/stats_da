@@ -5,6 +5,7 @@ library(data.table)
 library(datasets)
 library(shinyalert)
 library(shinyjs)
+library(pdfetch)
 
 dataFrameList <- c("0")
 datasetList <- sort(gsub("\\ .*","",data(package = "datasets")$results[, "Item"]))
@@ -19,7 +20,7 @@ dataFrameList <- dataFrameList[-1]
 shinyUI(
     dashboardPage(skin = "black",
     dashboardHeader(title = span(tagList(icon("chart-bar"), tags$head(tags$style(HTML("hr {border-top: 1px solid #000000;}"))), 
-                                                            "Probability Models", 
+                                                            "Statistics for DA", 
                                                             tags$head(tags$style(HTML("#mnom_xp { height : 200px; overflow-y : scroll }"))), 
                                                             tags$head(tags$style(HTML("#cpm_url_btn { margin-top : 25px }")))
                                          ))
@@ -33,6 +34,17 @@ shinyUI(
         menuItem("Continuous Probability Models", tabName = "cpm",
                  menuSubItem("Import Dataset", tabName = "cpm_imp", icon = icon("minus")),
                  menuSubItem("Generate Data", tabName = "cpm_gen", icon = icon("minus"))
+                 ),
+        menuItem("Hypothesis Testing", tabName = "ht",
+                 menuSubItem("Test of Mean", tabName = "ht_mean", icon = icon("minus")),
+                 menuSubItem("Test of Proportion", tabName = "ht_prop", icon = icon("minus")),
+                 menuSubItem("Goodness of Fit Test", tabName = "ht_goft", icon = icon("minus")),
+                 menuSubItem("Test of Variance", tabName = "ht_var", icon = icon("minus"))
+                 ),
+        menuItem("Generalized Linear Models", tabName = "glm",
+                 menuSubItem("Linear Regression", tabName = "glm_lin", icon = icon("minus")),
+                 menuSubItem("Logistic Regression", tabName = "glm_log", icon = icon("minus")),
+                 menuSubItem("Poisson Regression", tabName = "glm_pois", icon = icon("minus"))
                  )
       )
     ),
@@ -166,7 +178,46 @@ shinyUI(
                                tabPanel("Table", hr(), DT::dataTableOutput("cpm_imp_tab")),
                                tabPanel("Predicted Value", hr(), verbatimTextOutput("cpm_imp_pred"))
                                )
-                ))
+                )
+                ),
+        tabItem(tabName = "ht_mean",
+                sidebarPanel(
+                  selectInput("ht_source", "Select Data Source", choices = c("User Input" = "mean_input", "File" = "mean_file", "URL" = "mean_url", "In-Built" = "mean_inBuilt", "Yahoo Finance" = "mean_yfin")),
+                  conditionalPanel(condition = "input.ht_source == 'mean_input'",
+                                   numericInput("mean_mu", "Population mean : μ", value = 0),
+                                   numericInput("mean_xbar", "Sample mean : x̄", value = 0),
+                                   numericInput("mean_sigma", "Population SD : σ", value = 1),
+                                   numericInput("mean_n", "Sample size : n", value = 30),
+                                   radioButtons("mean_rb", "Test type : ",
+                                                c("Lower Tailed" = "meanInput_left",
+                                                  "Upper Tailed" = "meanInput_right",
+                                                  "Two Tailed" = "meanInput_two")),
+                                   sliderInput("mean_alpha", "Significan level : α", value = 0.05, min = 0, max = 0.25, step = 0.001)
+                                   ),
+                  conditionalPanel(condition = "input.ht_source == 'mean_file'",
+                                   numericInput("ht_mu", "file", value = 0)
+                                   ),
+                  conditionalPanel(condition = "input.ht_source == 'mean_url'",
+                                   numericInput("ht_mu", "url", value = 0)
+                                   ),
+                  conditionalPanel(condition = "input.ht_source == 'mean_inBuilt'",
+                                   numericInput("ht_mu", "inbuilt", value = 0)
+                                   ),
+                  conditionalPanel(condition = "input.ht_source == 'mean_yfin'",
+                                   numericInput("ht_mu", "yahoo finance", value = 0)
+                                   ),
+                  actionButton("mean_btn", "Submit")
+                ), mainPanel(
+                  hr(),
+                  tabsetPanel(type = "pills",
+                              tabPanel("Plot", hr(), plotOutput("ht_plot")),
+                              tabPanel("Result", hr(), verbatimTextOutput("ht_result")),
+                              tabPanel("Decision", hr(), verbatimTextOutput("ht_decision")),
+                              tabPanel("Data Table", hr(), DT::dataTableOutput("ht_tab")),
+                              tabPanel("Reference Table", hr(), uiOutput("ref_tab"))
+                  )
+                )
+                )
       )
     )
   )
