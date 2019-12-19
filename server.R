@@ -628,13 +628,44 @@ shinyServer(
       })
     })
     
+    htMeanFile <- reactive({
+      
+      imp_file <- input$mean_fileInput$datapath
+      if(is.null(imp_file)) {
+        return()
+      }
+      data1 <- read.csv(file = imp_file, header = input$mean_header, sep = input$mean_sep)
+      data1
+    })
+    
+    htMeanURL <- reactive({
+      imp_url <- input$mean_urlInput
+      if(is.null(imp_url)) {
+        return()
+      }
+      data2 <- read.csv(file = imp_url)
+      data2
+    })
+    
+    observeEvent(input$mean_url_btn, {
+      
+      input$mean_url_btn
+      isolate(updateSelectInput(session, "mean_url_cols", choices = colnames(htMeanURL())))
+      output$ht_mean_tab <- DT::renderDataTable({
+        input$mean_url_btn
+        isolate({
+          DT::datatable(htMeanURL())
+        })
+      })
+    })
+    
     observeEvent(input$mean_btn, {
       
-      output$ref_tab <- renderUI({
+      output$mean_ref_tab <- renderUI({
         tags$iframe(style = "height:525px; width:100%", src = "Z-table.pdf")
       })
       
-      output$ht_plot <- renderPlot({
+      output$ht_mean_plot <- renderPlot({
         
         input$mean_btn
         isolate({
@@ -645,10 +676,14 @@ shinyServer(
                                 new_list <- list(mean = input$mean_mu, sd = input$mean_sigma, alpha = input$mean_alpha)
                               },
                               mean_file = { 
-                                
+                                tempDF <- htMeanFile()
+                                tempCol <- na.omit(tempDF[, input$mean_file_cols])
+                                new_list <- list(mean = mean(tempCol), sd = sd(tempCol), alpha = input$mean_alpha)
                               },
                               mean_url = { 
-                                
+                                tempDF <- htMeanURL()
+                                tempCol <- na.omit(tempDF[, input$mean_url_cols])
+                                new_list <- list(mean = mean(tempCol), sd = sd(tempCol), alpha = input$mean_alpha)
                               },
                               mean_inBuilt = { 
                                 
@@ -756,7 +791,7 @@ shinyServer(
         })
       })
       
-      output$ht_decision <- renderPrint({
+      output$ht_mean_decision <- renderPrint({
         
         input$mean_btn
         isolate({
@@ -767,10 +802,14 @@ shinyServer(
                    temp <- list(mean = input$mean_mu, sd = input$mean_sigma, xbar = input$mean_xbar, n = input$mean_n, alpha = input$mean_alpha)
                  },
                  mean_file = { 
-                   
+                   tempDF <- htMeanFile()
+                   tempCol <- na.omit(tempDF[, input$mean_file_cols])
+                   temp <- list(mean = input$mean_mu, colVector = tempCol, alpha = input$mean_alpha)
                  },
                  mean_url = { 
-                   
+                   tempDF <- htMeanURL()
+                   tempCol <- na.omit(tempDF[, input$mean_url_cols])
+                   temp <- list(mean = input$mean_mu, colVector = tempCol, alpha = input$mean_alpha)
                  },
                  mean_inBuilt = { 
                    
@@ -784,7 +823,6 @@ shinyServer(
                     
                     if(input$ht_source == "mean_input") {
                       
-                      
                       test_value <- (decisionList$xbar - decisionList$mean)/(decisionList$sd/sqrt(decisionList$n))
                       c_value <- qnorm(decisionList$alpha)
 
@@ -796,6 +834,12 @@ shinyServer(
                       
                     } else {
                       
+                      t_test <- t.test(decisionList$colVector, mu = decisionList$mean, alternative = 'less', conf.level = (1 - decisionList$alpha))
+                      if(t_test$p.value < decisionList$alpha) {
+                        print("Reject Ho")
+                      } else {
+                        print("Accept Ho")
+                      }
                     }
                   },
                   meanInput_right = {
@@ -813,6 +857,12 @@ shinyServer(
                       
                     } else {
                       
+                      t_test <- t.test(decisionList$colVector, mu = decisionList$mean, alternative = 'greater', conf.level = (1 - decisionList$alpha))
+                      if(t_test$p.value < decisionList$alpha) {
+                        print("Reject Ho")
+                      } else {
+                        print("Accept Ho")
+                      }
                     }
                   },
                   meanInput_two = {
@@ -830,13 +880,19 @@ shinyServer(
                       
                     } else {
                       
+                      t_test <- t.test(decisionList$colVector, mu = decisionList$mean, alternative = 'two.sided', conf.level = (1 - decisionList$alpha))
+                      if(t_test$p.value < decisionList$alpha) {
+                        print("Reject Ho")
+                      } else {
+                        print("Accept Ho")
+                      }
                     }
                   }
           )
         })
       })
       
-      output$ht_result <- renderPrint({
+      output$ht_mean_result <- renderPrint({
         
         input$mean_btn
         isolate({
@@ -847,10 +903,14 @@ shinyServer(
                                    temp <- list(mean = input$mean_mu, sd = input$mean_sigma, xbar = input$mean_xbar, n = input$mean_n, alpha = input$mean_alpha)
                                  },
                                  mean_file = { 
-                                   
+                                   tempDF <- htMeanFile()
+                                   tempCol <- na.omit(tempDF[, input$mean_file_cols])
+                                   temp <- list(mean = input$mean_mu, colVector = tempCol, alpha = input$mean_alpha)
                                  },
                                  mean_url = { 
-                                   
+                                   tempDF <- htMeanURL()
+                                   tempCol <- na.omit(tempDF[, input$mean_url_cols])
+                                   temp <- list(mean = input$mean_mu, colVector = tempCol, alpha = input$mean_alpha)
                                  },
                                  mean_inBuilt = { 
                                    
@@ -864,15 +924,22 @@ shinyServer(
                     
                     if(input$ht_source == "mean_input") {
                       
-                      
                       test_value <- (resultList$xbar - resultList$mean)/(resultList$sd/sqrt(resultList$n))
                       c_value <- qnorm(resultList$alpha)
                       
                       print(paste("Test - Value :", test_value))
                       br()
                       print(paste("Critical - Value :", c_value))
+                      
                     } else {
                       
+                      t_test <- t.test(resultList$colVector, mu = resultList$mean, alternative = "less", conf.level = (1 - resultList$alpha))
+                      test_value <- t_test$statistic[["t"]]
+                      c_value <- qnorm(resultList$alpha)
+                      
+                      print(paste("Test - Value :", test_value))
+                      br()
+                      print(paste("Critical - Value :", c_value))
                     }
                   },
                   meanInput_right = {
@@ -888,6 +955,13 @@ shinyServer(
                       
                     } else {
                       
+                      t_test <- t.test(resultList$colVector, mu = resultList$mean, alternative = "greater", conf.level = (1 - resultList$alpha))
+                      test_value <- t_test$statistic[["t"]]
+                      c_value <- qnorm(1 - resultList$alpha)
+                      
+                      print(paste("Test - Value :", test_value))
+                      br()
+                      print(paste("Critical - Value :", c_value))
                     }
                   },
                   meanInput_two = {
@@ -895,7 +969,7 @@ shinyServer(
                     if(input$ht_source == "mean_input") {
                       
                       test_value <- (resultList$xbar - resultList$mean)/(resultList$sd/sqrt(resultList$n))
-                      c_value <- qnorm(1 - resultList$alpha/2) 
+                      c_value <- abs(qnorm(1 - resultList$alpha/2))
                       
                       print(paste("Test - Value :", test_value))
                       br()
@@ -903,16 +977,80 @@ shinyServer(
                       
                     } else {
                       
+                      t_test <- t.test(resultList$colVector, mu = resultList$mean, alternative = "two.sided", conf.level = (1 - resultList$alpha))
+                      test_value <- t_test$statistic[["t"]]
+                      c_value <- abs(qnorm(1 - resultList$alpha/2))
+                      
+                      print(paste("Test - Value :", test_value))
+                      br()
+                      print(paste("Critical - Value :", c_value))
                     }
                   }
           )
         })
       })
-      
+    })
+    
+    observe({
+      switch(input$ht_source,
+             mean_file = { updateSelectInput(session, "mean_file_cols", choices = colnames(htMeanFile())) },
+             mean_url = { updateSelectInput(session, "mean_url_cols", choices = c("")) },
+             mean_inBuilt = { 
+               # updateSelectInput(session, "cpm_imp_cols", choices = colnames(impCpmIB())) 
+               },
+             mean_yfin = {
+               
+               }
+      )
+    })
+    
+    observe({
+      switch(input$ht_source,
+             
+             mean_input = {
+               output$ht_mean_tab_ui <- renderText({
+                 print("No Table to display")
+               })
+               output$ht_mean_tab <- DT::renderDataTable({
+                 DT::datatable(data.frame())
+               })
+             },
+             mean_file = { 
+               output$ht_mean_tab_ui <- renderText({
+                 print("")
+               })
+               output$ht_mean_tab <- DT::renderDataTable({
+                 DT::datatable(htMeanFile())
+               })
+             },
+             mean_url = {
+               output$ht_mean_tab_ui <- renderText({
+                 print("")
+               })
+               output$ht_mean_tab <- DT::renderDataTable({
+                 DT::datatable(data.frame())
+               })
+             },
+             mean_inBuilt = { 
+               output$ht_mean_tab_ui <- renderText({
+                 print("")
+               })
+               output$ht_mean_tab <- DT::renderDataTable({
+                 DT::dataTableOutput(data.frame())
+               })
+             },
+             mean_yfin = {
+               output$ht_mean_tab_ui <- renderText({
+                 print("")
+               })
+               output$ht_mean_tab <- DT::renderDataTable({
+                 DT::dataTableOutput(data.frame())
+               })
+             }
+      )
     })
     
     
   }
 )
-
 

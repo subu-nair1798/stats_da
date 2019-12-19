@@ -22,7 +22,8 @@ shinyUI(
     dashboardHeader(title = span(tagList(icon("chart-bar"), tags$head(tags$style(HTML("hr {border-top: 1px solid #000000;}"))), 
                                                             "Statistics for DA", 
                                                             tags$head(tags$style(HTML("#mnom_xp { height : 200px; overflow-y : scroll }"))), 
-                                                            tags$head(tags$style(HTML("#cpm_url_btn { margin-top : 25px }")))
+                                                            tags$head(tags$style(HTML("#cpm_url_btn { margin-top : 25px }"))),
+                                                            tags$head(tags$style(HTML("#mean_url_btn { margin-top : 25px }")))
                                          ))
                     ),       
     dashboardSidebar(
@@ -37,14 +38,11 @@ shinyUI(
                  ),
         menuItem("Hypothesis Testing", tabName = "ht",
                  menuSubItem("Test of Mean", tabName = "ht_mean", icon = icon("minus")),
-                 menuSubItem("Test of Proportion", tabName = "ht_prop", icon = icon("minus")),
-                 menuSubItem("Goodness of Fit Test", tabName = "ht_goft", icon = icon("minus")),
                  menuSubItem("Test of Variance", tabName = "ht_var", icon = icon("minus"))
                  ),
         menuItem("Generalized Linear Models", tabName = "glm",
                  menuSubItem("Linear Regression", tabName = "glm_lin", icon = icon("minus")),
-                 menuSubItem("Logistic Regression", tabName = "glm_log", icon = icon("minus")),
-                 menuSubItem("Poisson Regression", tabName = "glm_pois", icon = icon("minus"))
+                 menuSubItem("Logistic Regression", tabName = "glm_log", icon = icon("minus"))
                  )
       )
     ),
@@ -158,7 +156,7 @@ shinyUI(
                                    ),
                   conditionalPanel(condition = "input.cpm_imp_source == 'url'",
                                    splitLayout(cellWidths = c("83.5%", "16.5%"),
-                                                 textInput("url_input",label = "Enter URL"),
+                                                 textInput("url_input", label = "Enter URL"),
                                                  actionButton("cpm_url_btn", "URL")
                                                )
                                    ),
@@ -184,21 +182,26 @@ shinyUI(
                 sidebarPanel(
                   selectInput("ht_source", "Select Data Source", choices = c("User Input" = "mean_input", "File" = "mean_file", "URL" = "mean_url", "In-Built" = "mean_inBuilt", "Yahoo Finance" = "mean_yfin")),
                   conditionalPanel(condition = "input.ht_source == 'mean_input'",
-                                   numericInput("mean_mu", "Population mean : μ", value = 0),
-                                   numericInput("mean_xbar", "Sample mean : x̄", value = 0),
+                                   numericInput("mean_xbar", "Sample mean : x̅ ", value = 0),
                                    numericInput("mean_sigma", "Population SD : σ", value = 1),
-                                   numericInput("mean_n", "Sample size : n", value = 30),
-                                   radioButtons("mean_rb", "Test type : ",
-                                                c("Lower Tailed" = "meanInput_left",
-                                                  "Upper Tailed" = "meanInput_right",
-                                                  "Two Tailed" = "meanInput_two")),
-                                   sliderInput("mean_alpha", "Significan level : α", value = 0.05, min = 0, max = 0.25, step = 0.001)
+                                   numericInput("mean_n", "Sample size : n", value = 30)
                                    ),
                   conditionalPanel(condition = "input.ht_source == 'mean_file'",
-                                   numericInput("ht_mu", "file", value = 0)
+                                   fileInput("mean_fileInput", "Choose CSV File", multiple = FALSE, accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
+                                   checkboxInput("mean_header", "Header", TRUE),
+                                   radioButtons("mean_sep", "Separator",
+                                                choices = c(Comma = ",",
+                                                            Semicolon = ";",
+                                                            Tab = "\t"),
+                                                selected = ","),
+                                   selectInput("mean_file_cols", "Select a Column", choices = "")
                                    ),
                   conditionalPanel(condition = "input.ht_source == 'mean_url'",
-                                   numericInput("ht_mu", "url", value = 0)
+                                   splitLayout(cellWidths = c("83.5%", "16.5%"),
+                                               textInput("mean_urlInput", label = "Enter URL"),
+                                               actionButton("mean_url_btn", "URL")
+                                   ),
+                                   selectInput("mean_url_cols", "Select a Column", choices = "")
                                    ),
                   conditionalPanel(condition = "input.ht_source == 'mean_inBuilt'",
                                    numericInput("ht_mu", "inbuilt", value = 0)
@@ -206,15 +209,21 @@ shinyUI(
                   conditionalPanel(condition = "input.ht_source == 'mean_yfin'",
                                    numericInput("ht_mu", "yahoo finance", value = 0)
                                    ),
+                  numericInput("mean_mu", "Population mean : μ", value = 0),
+                  radioButtons("mean_rb", "Test type : ",
+                               c("Lower Tailed" = "meanInput_left",
+                                 "Upper Tailed" = "meanInput_right",
+                                 "Two Tailed" = "meanInput_two")),
+                  sliderInput("mean_alpha", "Significance level : α", value = 0.05, min = 0, max = 0.25, step = 0.001),
                   actionButton("mean_btn", "Submit")
                 ), mainPanel(
                   hr(),
                   tabsetPanel(type = "pills",
-                              tabPanel("Plot", hr(), plotOutput("ht_plot")),
-                              tabPanel("Result", hr(), verbatimTextOutput("ht_result")),
-                              tabPanel("Decision", hr(), verbatimTextOutput("ht_decision")),
-                              tabPanel("Data Table", hr(), DT::dataTableOutput("ht_tab")),
-                              tabPanel("Reference Table", hr(), uiOutput("ref_tab"))
+                              tabPanel("Plot", hr(), plotOutput("ht_mean_plot")),
+                              tabPanel("Result", hr(), verbatimTextOutput("ht_mean_result")),
+                              tabPanel("Decision", hr(), verbatimTextOutput("ht_mean_decision")),
+                              tabPanel("Data Table", hr(), DT::dataTableOutput("ht_mean_tab"), textOutput("ht_mean_tab_ui")),
+                              tabPanel("Reference Table", hr(), uiOutput("mean_ref_tab"))
                   )
                 )
                 )
