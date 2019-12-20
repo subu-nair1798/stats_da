@@ -646,7 +646,7 @@ shinyServer(
       data2 <- read.csv(file = imp_url)
       data2
     })
-    
+  
     observeEvent(input$mean_url_btn, {
       
       input$mean_url_btn
@@ -659,11 +659,47 @@ shinyServer(
       })
     })
     
-    observeEvent(input$mean_btn, {
+    htMeanInBuilt <- reactive({
+      data3 <- get(input$mean_inBuiltInput)
+      data3
+    })
+    
+    
+    htMeanYfin <- reactive({
+      tickerName <- input$mean_tickerInput
       
-      output$mean_ref_tab <- renderUI({
-        tags$iframe(style = "height:525px; width:100%", src = "Z-table.pdf")
+      startDate <- Sys.Date() - 1*365
+      endDate <- Sys.Date()
+      
+      stockData <- data.frame(pdfetch_YAHOO(identifiers = tickerName, fields = c("open", "high", "low", "volume", "close"), 
+                                            from = as.Date(startDate), to = endDate, interval = input$mean_freqInput))
+      
+      names(stockData)[names(stockData) == paste0(tickerName, ".open")] <- "Open"
+      names(stockData)[names(stockData) == paste0(tickerName, ".high")] <- "High"
+      names(stockData)[names(stockData) == paste0(tickerName, ".low")] <- "Low"
+      names(stockData)[names(stockData) == paste0(tickerName, ".volume")] <- "Volume"
+      names(stockData)[names(stockData) == paste0(tickerName, ".close")] <- "Close"
+      
+      stockData
+    })
+    
+    observeEvent(input$mean_yfin_btn, {
+      
+      input$mean_yfin_btn
+      isolate(updateSelectInput(session, "mean_yfin_cols", choices = colnames(htMeanYfin())))
+      output$ht_mean_tab <- DT::renderDataTable({
+        input$mean_yfin_btn
+        isolate({
+          DT::datatable(htMeanYfin())
+        })
       })
+    })
+    
+    output$mean_ref_tab <- renderUI({
+      tags$iframe(style = "height:525px; width:100%", src = "Z-table.pdf")
+    })
+    
+    observeEvent(input$mean_btn, {
       
       output$ht_mean_plot <- renderPlot({
         
@@ -686,10 +722,14 @@ shinyServer(
                                 new_list <- list(mean = mean(tempCol), sd = sd(tempCol), alpha = input$mean_alpha)
                               },
                               mean_inBuilt = { 
-                                
+                                tempDF <- htMeanInBuilt()
+                                tempCol <- na.omit(tempDF[, input$mean_ibds_cols])
+                                temp <- list(mean = mean(tempCol), sd = sd(tempCol), alpha = input$mean_alpha)
                               },
                               mean_yfin = {
-                                
+                                tempDF <- htMeanYfin()
+                                tempCol <- na.omit(tempDF[, input$mean_yfin_cols])
+                                temp <- list(mean = mean(tempCol), sd = sd(tempCol), alpha = input$mean_alpha)
                               })
           
             switch(input$mean_rb, 
@@ -812,10 +852,14 @@ shinyServer(
                    temp <- list(mean = input$mean_mu, colVector = tempCol, alpha = input$mean_alpha)
                  },
                  mean_inBuilt = { 
-                   
+                   tempDF <- htMeanInBuilt()
+                   tempCol <- na.omit(tempDF[, input$mean_ibds_cols])
+                   temp <- list(mean = input$mean_mu, colVector = tempCol, alpha = input$mean_alpha)
                  },
                  mean_yfin = {
-                   
+                   tempDF <- htMeanYfin()
+                   tempCol <- na.omit(tempDF[, input$mean_yfin_cols])
+                   temp <- list(mean = input$mean_mu, colVector = tempCol, alpha = input$mean_alpha)
                  })
           
           switch (input$mean_rb,
@@ -913,10 +957,14 @@ shinyServer(
                                    temp <- list(mean = input$mean_mu, colVector = tempCol, alpha = input$mean_alpha)
                                  },
                                  mean_inBuilt = { 
-                                   
+                                   tempDF <- htMeanInBuilt()
+                                   tempCol <- na.omit(tempDF[, input$mean_ibds_cols])
+                                   temp <- list(mean = input$mean_mu, colVector = tempCol, alpha = input$mean_alpha)
                                  },
                                  mean_yfin = {
-                                   
+                                   tempDF <- htMeanYfin()
+                                   tempCol <- na.omit(tempDF[, input$mean_yfin_cols])
+                                   temp <- list(mean = input$mean_mu, colVector = tempCol, alpha = input$mean_alpha)
                                  })
           
           switch (input$mean_rb,
@@ -995,12 +1043,8 @@ shinyServer(
       switch(input$ht_source,
              mean_file = { updateSelectInput(session, "mean_file_cols", choices = colnames(htMeanFile())) },
              mean_url = { updateSelectInput(session, "mean_url_cols", choices = c("")) },
-             mean_inBuilt = { 
-               # updateSelectInput(session, "cpm_imp_cols", choices = colnames(impCpmIB())) 
-               },
-             mean_yfin = {
-               
-               }
+             mean_inBuilt = { updateSelectInput(session, "mean_ibds_cols", choices = colnames(htMeanInBuilt())) },
+             mean_yfin = { updateSelectInput(session, "mean_yfin_cols", choices = c("")) }
       )
     })
     
@@ -1036,7 +1080,7 @@ shinyServer(
                  print("")
                })
                output$ht_mean_tab <- DT::renderDataTable({
-                 DT::dataTableOutput(data.frame())
+                 DT::datatable(htMeanInBuilt())
                })
              },
              mean_yfin = {
@@ -1044,13 +1088,12 @@ shinyServer(
                  print("")
                })
                output$ht_mean_tab <- DT::renderDataTable({
-                 DT::dataTableOutput(data.frame())
+                 DT::datatable(data.frame())
                })
              }
       )
     })
     
-    
+  
   }
 )
-

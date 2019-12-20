@@ -23,7 +23,8 @@ shinyUI(
                                                             "Statistics for DA", 
                                                             tags$head(tags$style(HTML("#mnom_xp { height : 200px; overflow-y : scroll }"))), 
                                                             tags$head(tags$style(HTML("#cpm_url_btn { margin-top : 25px }"))),
-                                                            tags$head(tags$style(HTML("#mean_url_btn { margin-top : 25px }")))
+                                                            tags$head(tags$style(HTML("#mean_url_btn { margin-top : 25px }"))),
+                                                            tags$head(tags$style(HTML("#mean_yfin_btn { margin-top : 25px }")))
                                          ))
                     ),       
     dashboardSidebar(
@@ -204,10 +205,16 @@ shinyUI(
                                    selectInput("mean_url_cols", "Select a Column", choices = "")
                                    ),
                   conditionalPanel(condition = "input.ht_source == 'mean_inBuilt'",
-                                   numericInput("ht_mu", "inbuilt", value = 0)
+                                   selectInput("mean_inBuiltInput", "Select Dataset", dataFrameList),
+                                   selectInput("mean_ibds_cols", "Select a Column", choices = "")
                                    ),
                   conditionalPanel(condition = "input.ht_source == 'mean_yfin'",
-                                   numericInput("ht_mu", "yahoo finance", value = 0)
+                                   splitLayout(cellWidths = c("82%", "18%"),
+                                               textInput("mean_tickerInput", "Enter ticker"),
+                                               actionButton("mean_yfin_btn", "Fetch")
+                                   ),
+                                   selectInput("mean_freqInput", "Enter Frequency", choices = c("1d", "1wk", "1mo")),
+                                   selectInput("mean_yfin_cols", "Select a Column", choices = "")
                                    ),
                   numericInput("mean_mu", "Population mean : μ", value = 0),
                   radioButtons("mean_rb", "Test type : ",
