@@ -6,6 +6,8 @@ library(datasets)
 library(shinyalert)
 library(shinyjs)
 library(pdfetch)
+library(caTools)
+library(MASS)
 
 shinyServer(
   function(input, output, session) {
@@ -706,7 +708,7 @@ shinyServer(
         input$mean_btn
         isolate({
           
-          mean_list <- switch(input$ht_source,
+          mean_list <- switch(input$ht_mean_source,
                               
                               mean_input = {
                                 new_list <- list(mean = input$mean_mu, sd = input$mean_sigma, alpha = input$mean_alpha)
@@ -836,7 +838,7 @@ shinyServer(
         input$mean_btn
         isolate({
           
-          decisionList <- switch(input$ht_source,
+          decisionList <- switch(input$ht_mean_source,
                  
                  mean_input = {
                    temp <- list(mean = input$mean_mu, sd = input$mean_sigma, xbar = input$mean_xbar, n = input$mean_n, alpha = input$mean_alpha)
@@ -865,7 +867,7 @@ shinyServer(
           switch (input$mean_rb,
                   meanInput_left = {
                     
-                    if(input$ht_source == "mean_input") {
+                    if(input$ht_mean_source == "mean_input") {
                       
                       test_value <- (decisionList$xbar - decisionList$mean)/(decisionList$sd/sqrt(decisionList$n))
                       c_value <- qnorm(decisionList$alpha)
@@ -888,7 +890,7 @@ shinyServer(
                   },
                   meanInput_right = {
                     
-                    if(input$ht_source == "mean_input") {
+                    if(input$ht_mean_source == "mean_input") {
                       
                       test_value <- (decisionList$xbar - decisionList$mean)/(decisionList$sd/sqrt(decisionList$n))
                       c_value <- qnorm(1 - decisionList$alpha) 
@@ -911,7 +913,7 @@ shinyServer(
                   },
                   meanInput_two = {
                     
-                    if(input$ht_source == "mean_input") {
+                    if(input$ht_mean_source == "mean_input") {
                       
                       test_value <- (decisionList$xbar - decisionList$mean)/(decisionList$sd/sqrt(decisionList$n))
                       c_value <- qnorm(1 - decisionList$alpha/2) 
@@ -941,7 +943,7 @@ shinyServer(
         input$mean_btn
         isolate({
           
-          resultList <- switch(input$ht_source,
+          resultList <- switch(input$ht_mean_source,
                                  
                                  mean_input = {
                                    temp <- list(mean = input$mean_mu, sd = input$mean_sigma, xbar = input$mean_xbar, n = input$mean_n, alpha = input$mean_alpha)
@@ -970,7 +972,7 @@ shinyServer(
           switch (input$mean_rb,
                   meanInput_left = {
                     
-                    if(input$ht_source == "mean_input") {
+                    if(input$ht_mean_source == "mean_input") {
                       
                       test_value <- (resultList$xbar - resultList$mean)/(resultList$sd/sqrt(resultList$n))
                       c_value <- qnorm(resultList$alpha)
@@ -992,7 +994,7 @@ shinyServer(
                   },
                   meanInput_right = {
                     
-                    if(input$ht_source == "mean_input") {
+                    if(input$ht_mean_source == "mean_input") {
                       
                       test_value <- (resultList$xbar - resultList$mean)/(resultList$sd/sqrt(resultList$n))
                       c_value <- qnorm(1 - resultList$alpha) 
@@ -1014,7 +1016,7 @@ shinyServer(
                   },
                   meanInput_two = {
                     
-                    if(input$ht_source == "mean_input") {
+                    if(input$ht_mean_source == "mean_input") {
                       
                       test_value <- (resultList$xbar - resultList$mean)/(resultList$sd/sqrt(resultList$n))
                       c_value <- abs(qnorm(1 - resultList$alpha/2))
@@ -1040,7 +1042,7 @@ shinyServer(
     })
     
     observe({
-      switch(input$ht_source,
+      switch(input$ht_mean_source,
              mean_file = { updateSelectInput(session, "mean_file_cols", choices = colnames(htMeanFile())) },
              mean_url = { updateSelectInput(session, "mean_url_cols", choices = c("")) },
              mean_inBuilt = { updateSelectInput(session, "mean_ibds_cols", choices = colnames(htMeanInBuilt())) },
@@ -1049,7 +1051,7 @@ shinyServer(
     })
     
     observe({
-      switch(input$ht_source,
+      switch(input$ht_mean_source,
              
              mean_input = {
                output$ht_mean_tab_ui <- renderText({
@@ -1088,6 +1090,141 @@ shinyServer(
                  print("")
                })
                output$ht_mean_tab <- DT::renderDataTable({
+                 DT::datatable(data.frame())
+               })
+             }
+      )
+    })
+    
+    glmLinearFile <- reactive({
+      
+      imp_file <- input$lin_fileInput$datapath
+      if(is.null(imp_file)) {
+        return()
+      }
+      data1 <- read.csv(file = imp_file, header = input$lin_header, sep = input$lin_sep)
+      data1
+    })
+    
+    glmLinearURL <- reactive({
+      
+      imp_url <- input$lin_urlInput
+      if(is.null(imp_url)) {
+        return()
+      }
+      data2 <- read.csv(file = imp_url)
+      data2
+    })
+    
+    observeEvent(input$lin_url_btn, {
+      
+      input$lin_url_btn
+      isolate({
+        updateSelectInput(session, "glm_lin_targetCol", choices = colnames(glmLinearURL()))
+        observe({
+          updateSelectInput(session, "glm_lin_independentCol", choices = colnames(glmLinearURL())[-which(colnames(glmLinearURL()) == input$glm_lin_targetCol)])
+        })
+      })
+      
+      output$glm_lin_tab <- DT::renderDataTable({
+        input$lin_url_btn
+        isolate({
+          DT::datatable(glmLinearURL())
+        })
+      })
+    })
+    
+    glmLinearInBuilt <- reactive({
+      data3 <- get(input$lin_inBuiltInput)
+      data3
+    })
+    
+    
+    glmLinearYfin <- reactive({
+      tickerName <- input$lin_tickerInput
+      
+      startDate <- Sys.Date() - 1*365
+      endDate <- Sys.Date()
+      
+      stockData <- data.frame(pdfetch_YAHOO(identifiers = tickerName, fields = c("open", "high", "low", "volume", "close"), 
+                                            from = as.Date(startDate), to = endDate, interval = input$lin_freqInput))
+      
+      names(stockData)[names(stockData) == paste0(tickerName, ".open")] <- "Open"
+      names(stockData)[names(stockData) == paste0(tickerName, ".high")] <- "High"
+      names(stockData)[names(stockData) == paste0(tickerName, ".low")] <- "Low"
+      names(stockData)[names(stockData) == paste0(tickerName, ".volume")] <- "Volume"
+      names(stockData)[names(stockData) == paste0(tickerName, ".close")] <- "Close"
+      
+      stockData
+    })
+    
+    observeEvent(input$lin_yfin_btn, {
+      
+      input$lin_yfin_btn
+      isolate({
+        updateSelectInput(session, "glm_lin_targetCol", choices = colnames(glmLinearYfin()))
+        observe({
+          updateSelectInput(session, "glm_lin_independentCol", choices = colnames(glmLinearYfin())[-which(colnames(glmLinearYfin()) == input$glm_lin_targetCol)])
+        })
+      })
+      
+      output$glm_lin_tab <- DT::renderDataTable({
+        input$lin_yfin_btn
+        isolate({
+          DT::datatable(glmLinearYfin())
+        })
+      })
+    })
+    
+    
+    # observeEvent(input$glm_lin_btn,
+    #              
+    #              output$glm_lin_plot <- renderPlot({
+    #                
+    #              })
+    #              )
+    
+    observe({
+      switch(input$glm_lin_source,
+             lin_file = { updateSelectInput(session, "glm_lin_targetCol", choices = colnames(glmLinearFile()))
+                          observe({
+                            updateSelectInput(session, "glm_lin_independentCol", choices = colnames(glmLinearInBuilt())[-which(colnames(glmLinearInBuilt()) == input$glm_lin_targetCol)])
+                          }) },
+             lin_url = { updateSelectInput(session, "glm_lin_targetCol", choices = c(""))
+                         updateSelectInput(session, "glm_lin_independentCol", choices = c("")) },
+             lin_inBuilt = { updateSelectInput(session, "glm_lin_targetCol", choices = colnames(glmLinearInBuilt()))
+                             observe({
+                               updateSelectInput(session, "glm_lin_independentCol", choices = colnames(glmLinearInBuilt())[-which(colnames(glmLinearInBuilt()) == input$glm_lin_targetCol)])
+                             }) },
+             lin_yfin = { updateSelectInput(session, "glm_lin_targetCol", choices = c(""))
+                          updateSelectInput(session, "glm_lin_independentCol", choices = c("")) }
+      )
+    })
+    
+    output$glm_lin_pred <- renderPrint({
+      print(colnames(glmLinearInBuilt())[-which(colnames(glmLinearInBuilt()) == input$glm_lin_targetCol)])
+    })
+    
+    observe({
+      switch(input$glm_lin_source,
+             
+             line_file = { 
+               output$glm_lin_tab <- DT::renderDataTable({
+                 DT::datatable(glmLinearFile())
+               })
+             },
+             lin_url = {
+               output$glm_lin_tab <- DT::renderDataTable({
+                 DT::datatable(data.frame())
+               })
+             },
+             lin_inBuilt = { 
+               output$glm_lin_tab <- DT::renderDataTable({
+                 DT::datatable(glmLinearInBuilt())
+               })
+             },
+             lin_yfin = {
+               output$glm_lin_tab <- DT::renderDataTable({
                  DT::datatable(data.frame())
                })
              }

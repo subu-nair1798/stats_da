@@ -6,6 +6,8 @@ library(datasets)
 library(shinyalert)
 library(shinyjs)
 library(pdfetch)
+library(caTools)
+library(MASS)
 
 dataFrameList <- c("0")
 datasetList <- sort(gsub("\\ .*","",data(package = "datasets")$results[, "Item"]))
@@ -24,7 +26,9 @@ shinyUI(
                                                             tags$head(tags$style(HTML("#mnom_xp { height : 200px; overflow-y : scroll }"))), 
                                                             tags$head(tags$style(HTML("#cpm_url_btn { margin-top : 25px }"))),
                                                             tags$head(tags$style(HTML("#mean_url_btn { margin-top : 25px }"))),
-                                                            tags$head(tags$style(HTML("#mean_yfin_btn { margin-top : 25px }")))
+                                                            tags$head(tags$style(HTML("#mean_yfin_btn { margin-top : 25px }"))),
+                                                            tags$head(tags$style(HTML("#lin_url_btn { margin-top : 25px }"))),
+                                                            tags$head(tags$style(HTML("#lin_yfin_btn { margin-top : 25px }")))
                                          ))
                     ),       
     dashboardSidebar(
@@ -181,13 +185,13 @@ shinyUI(
                 ),
         tabItem(tabName = "ht_mean",
                 sidebarPanel(
-                  selectInput("ht_source", "Select Data Source", choices = c("User Input" = "mean_input", "File" = "mean_file", "URL" = "mean_url", "In-Built" = "mean_inBuilt", "Yahoo Finance" = "mean_yfin")),
-                  conditionalPanel(condition = "input.ht_source == 'mean_input'",
+                  selectInput("ht_mean_source", "Select Data Source", choices = c("User Input" = "mean_input", "File" = "mean_file", "URL" = "mean_url", "In-Built" = "mean_inBuilt", "Yahoo Finance" = "mean_yfin")),
+                  conditionalPanel(condition = "input.ht_mean_source == 'mean_input'",
                                    numericInput("mean_xbar", "Sample mean : x̅ ", value = 0),
                                    numericInput("mean_sigma", "Population SD : σ", value = 1),
                                    numericInput("mean_n", "Sample size : n", value = 30)
                                    ),
-                  conditionalPanel(condition = "input.ht_source == 'mean_file'",
+                  conditionalPanel(condition = "input.ht_mean_source == 'mean_file'",
                                    fileInput("mean_fileInput", "Choose CSV File", multiple = FALSE, accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
                                    checkboxInput("mean_header", "Header", TRUE),
                                    radioButtons("mean_sep", "Separator",
@@ -197,18 +201,18 @@ shinyUI(
                                                 selected = ","),
                                    selectInput("mean_file_cols", "Select a Column", choices = "")
                                    ),
-                  conditionalPanel(condition = "input.ht_source == 'mean_url'",
+                  conditionalPanel(condition = "input.ht_mean_source == 'mean_url'",
                                    splitLayout(cellWidths = c("83.5%", "16.5%"),
                                                textInput("mean_urlInput", label = "Enter URL"),
                                                actionButton("mean_url_btn", "URL")
                                    ),
                                    selectInput("mean_url_cols", "Select a Column", choices = "")
                                    ),
-                  conditionalPanel(condition = "input.ht_source == 'mean_inBuilt'",
+                  conditionalPanel(condition = "input.ht_mean_source == 'mean_inBuilt'",
                                    selectInput("mean_inBuiltInput", "Select Dataset", dataFrameList),
                                    selectInput("mean_ibds_cols", "Select a Column", choices = "")
                                    ),
-                  conditionalPanel(condition = "input.ht_source == 'mean_yfin'",
+                  conditionalPanel(condition = "input.ht_mean_source == 'mean_yfin'",
                                    splitLayout(cellWidths = c("82%", "18%"),
                                                textInput("mean_tickerInput", "Enter ticker"),
                                                actionButton("mean_yfin_btn", "Fetch")
@@ -231,6 +235,53 @@ shinyUI(
                               tabPanel("Decision", hr(), verbatimTextOutput("ht_mean_decision")),
                               tabPanel("Data Table", hr(), DT::dataTableOutput("ht_mean_tab"), textOutput("ht_mean_tab_ui")),
                               tabPanel("Reference Table", hr(), uiOutput("mean_ref_tab"))
+                  )
+                )
+                ),
+        tabItem(tabName = "glm_lin",
+                sidebarPanel(
+                  selectInput("glm_lin_source", "Select Data Source", choices = c("File" = "lin_file", "URL" = "lin_url", "In Built" = "lin_inBuilt", "Yahoo Finance" = "lin_yfin")),
+                  conditionalPanel(condition = "input.glm_lin_source == 'lin_file'",
+                                   fileInput("lin_fileInput", "Choose CSV File", multiple = FALSE, accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
+                                   checkboxInput("lin_header", "Header", TRUE),
+                                   radioButtons("lin_sep", "Separator",
+                                                choices = c(Comma = ",",
+                                                            Semicolon = ";",
+                                                            Tab = "\t"),
+                                                selected = ",")
+                                   ),
+                  conditionalPanel(condition = "input.glm_lin_source == 'lin_url'",
+                                   splitLayout(cellWidths = c("83.5%", "16.5%"),
+                                               textInput("lin_urlInput", label = "Enter URL"),
+                                               actionButton("lin_url_btn", "URL")
+                                   )),
+                  conditionalPanel(condition = "input.glm_lin_source == 'lin_inBuilt'",
+                                   selectInput("lin_inBuiltInput", "Select Dataset", dataFrameList)
+                                   ),
+                  conditionalPanel(condition = "input.glm_lin_source == 'lin_yfin'",
+                                   splitLayout(cellWidths = c("82%", "18%"),
+                                               textInput("lin_tickerInput", "Enter ticker"),
+                                               actionButton("lin_yfin_btn", "Fetch")
+                                   ),
+                                   selectInput("lin_freqInput", "Enter Frequency", choices = c("1d", "1wk", "1mo"))
+                                   ),
+                  selectInput("glm_lin_targetCol", "Select Target Variable", choices = ""),
+                  selectInput("glm_lin_independentCol", "Select Independent Variable(s)", choices = "", multiple = TRUE),
+                  selectInput("glm_lin_type", "Select Method", choices = c("Link Function" = "glm_lin_func", "RMSE" = "glm_lin_rmse", "Confusion Matrix" = "glm_lin_cmat")),
+                  conditionalPanel(condition = "input.glm_lin_type == 'glm_lin_func'",
+                                   uiOutput("linkFunc_ui")
+                                   ),
+                  conditionalPanel(condition = "input.glm_lin_type != 'glm_lin_func'",
+                                   sliderInput("glm_lin_dataSplit", "Train - Test Data Split", value = 80, min = 0, max = 100, step = 1),
+                                   numericInput("glm_lin_mc", "Monte-Carlo Simulation", value = 1000)
+                                   ),
+                  actionButton("glm_lin_btn", "Submit")
+                ), mainPanel(
+                  hr(),
+                  tabsetPanel(type = "pills",
+                              tabPanel("Table", hr(), DT::dataTableOutput("glm_lin_tab")),
+                              tabPanel("Predicted Value", hr(), verbatimTextOutput("glm_lin_pred")),
+                              tabPanel("Plot", hr(), plotOutput("glm_lin_plot"), textOutput("glm_lin_plotMessage"))
                   )
                 )
                 )
