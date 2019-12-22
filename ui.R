@@ -23,7 +23,8 @@ shinyUI(
     dashboardPage(skin = "black",
     dashboardHeader(title = span(tagList(icon("chart-bar"), tags$head(tags$style(HTML("hr {border-top: 1px solid #000000;}"))), 
                                                             "Statistics for DA", 
-                                                            tags$head(tags$style(HTML("#mnom_xp { height : 200px; overflow-y : scroll }"))), 
+                                                            tags$head(tags$style(HTML("#mnom_xp { height : 200px; overflow-y : scroll }"))),
+                                                            tags$head(tags$style(HTML("#linkFunc_ui { height : 100px; overflow-y : scroll }"))), 
                                                             tags$head(tags$style(HTML("#cpm_url_btn { margin-top : 25px }"))),
                                                             tags$head(tags$style(HTML("#mean_url_btn { margin-top : 25px }"))),
                                                             tags$head(tags$style(HTML("#mean_yfin_btn { margin-top : 25px }"))),
@@ -275,6 +276,7 @@ shinyUI(
                                    sliderInput("glm_lin_dataSplit", "Train - Test Data Split", value = 80, min = 0, max = 100, step = 1),
                                    numericInput("glm_lin_mc", "Monte-Carlo Simulation", value = 1000)
                                    ),
+                  sliderInput("lin_alpha", "Significance level : α", value = 0.05, min = 0, max = 0.25, step = 0.001),
                   actionButton("glm_lin_btn", "Submit")
                 ), mainPanel(
                   hr(),

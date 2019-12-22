@@ -1176,13 +1176,112 @@ shinyServer(
       })
     })
     
+    output$linkFunc_ui <- renderUI({
+      if(length(input$glm_lin_independentCol) > 0) {
+        lapply(1:length(input$glm_lin_independentCol) , function(i) { 
+          strong(numericInput(as.character(paste0("col_x", i)), paste0(input$glm_lin_independentCol[i]), value = as.numeric(i)),
+                 br())
+        })
+      }
+    })
     
-    # observeEvent(input$glm_lin_btn,
-    #              
-    #              output$glm_lin_plot <- renderPlot({
-    #                
-    #              })
-    #              )
+    observeEvent(input$glm_lin_btn,{
+      
+      output$glm_lin_pred <- renderPrint({
+        
+        input$glm_lin_btn
+        isolate({
+          
+          predictList <- switch(input$glm_lin_source,
+            lin_file = {
+              datasetDF <- glmLinearFile()
+              targetCol <- datasetDF[, input$glm_lin_targetCol]
+              independentCols <- datasetDF[, input$glm_lin_independentCol]
+              newList <- list(tarData = targetCol, indData = independentCols)
+            },
+            lin_url = {
+              datasetDF <- glmLinearURL()
+              targetCol <- datasetDF[, input$glm_lin_targetCol]
+              independentCols <- na.omit(datasetDF[, input$glm_lin_independentCol])
+              newList <- list(tarData = targetCol, indData = independentCols)
+            },
+            lin_inBuilt = {
+              datasetDF <- glmLinearInBuilt()
+              targetCol <- datasetDF[, input$glm_lin_targetCol]
+              independentCols <- datasetDF[, input$glm_lin_independentCol]
+              newList <- list(tarData = targetCol, indData = independentCols)
+            },
+            lin_yfin = {
+              datasetDF <- glmLinearYfin()
+              targetCol <- datasetDF[, input$glm_lin_targetCol]
+              independentCols <- datasetDF[, input$glm_lin_independentCol]
+              newList <- list(tarData = targetCol, indData = independentCols)
+            }
+          )
+          
+          switch (input$glm_lin_type,
+                  
+            glm_lin_func = {
+              colNameVector <- c("-1")
+              tempDF <- data.frame(rep(0, length(predictList$tarData)))
+              for(i in 1:length(predictList$indData)) {
+                colNameVector <- c(colNameVector, paste0("xcol", i))
+                assign(paste0("xcol", i), predictList$indData[, i])
+                tempDF <- cbind(tempDF, get(paste0("xcol", i)))
+              }
+              ycol <- as.vector(predictList$tarData)
+              colNameVector <- colNameVector[-1]
+              tempDF <- cbind(tempDF, ycol)
+              tempDF <- tempDF[, -1]
+              
+              names(tempDF) <- c(colNameVector, "ycol")
+
+              tempFit <- glm(as.formula(paste("ycol ~", paste(colNameVector, collapse = "+"))), data = tempDF,family = "gaussian")
+              print(summary(tempFit))
+              
+              coefVector <- c(1)
+              if(input$mnom_k > 0) {
+                for(i in 1:length(predictList$indData)) {
+                  coefVector <- c(coefVector, as.numeric(input[[paste0("col_x", as.character(i))]]))
+                }
+              }
+              estVector <- c(-1)
+              for(i in 1:sum(length(colNameVector) + 1)) {
+                if(summary(tempFit)$coef[i,4] <= input$lin_alpha) {
+                  estVector <- c(estVector, summary(tempFit)$coef[i, 1])
+                } else {
+                  estVector <- c(estVector, 0)
+                }
+              }
+              
+              estVector <- estVector[-1]
+              predictedValue <- sum(estVector*coefVector)
+              print(paste("Predicted Value:", predictedValue))
+            
+            },
+            glm_lin_rmse = {
+              
+            },
+            glm_lin_cmat = {
+              
+            }
+          )
+        })
+      })
+      
+      output$glm_lin_plot <- renderPlot({
+        
+        input$glm_lin_btn
+        isolate({
+          
+        })
+      })
+      
+      output$glm_lin_plotMessage <- renderPlot({
+        
+      })
+      
+    })
     
     observe({
       switch(input$glm_lin_source,
@@ -1200,11 +1299,7 @@ shinyServer(
                           updateSelectInput(session, "glm_lin_independentCol", choices = c("")) }
       )
     })
-    
-    output$glm_lin_pred <- renderPrint({
-      print(colnames(glmLinearInBuilt())[-which(colnames(glmLinearInBuilt()) == input$glm_lin_targetCol)])
-    })
-    
+
     observe({
       switch(input$glm_lin_source,
              
