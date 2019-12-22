@@ -1196,25 +1196,25 @@ shinyServer(
             lin_file = {
               datasetDF <- glmLinearFile()
               targetCol <- datasetDF[, input$glm_lin_targetCol]
-              independentCols <- datasetDF[, input$glm_lin_independentCol]
+              independentCols <- data.frame(datasetDF[, input$glm_lin_independentCol])
               newList <- list(tarData = targetCol, indData = independentCols)
             },
             lin_url = {
               datasetDF <- glmLinearURL()
               targetCol <- datasetDF[, input$glm_lin_targetCol]
-              independentCols <- na.omit(datasetDF[, input$glm_lin_independentCol])
+              independentCols <- data.frame(datasetDF[, input$glm_lin_independentCol])
               newList <- list(tarData = targetCol, indData = independentCols)
             },
             lin_inBuilt = {
               datasetDF <- glmLinearInBuilt()
               targetCol <- datasetDF[, input$glm_lin_targetCol]
-              independentCols <- datasetDF[, input$glm_lin_independentCol]
+              independentCols <- data.frame(datasetDF[, input$glm_lin_independentCol])
               newList <- list(tarData = targetCol, indData = independentCols)
             },
             lin_yfin = {
               datasetDF <- glmLinearYfin()
               targetCol <- datasetDF[, input$glm_lin_targetCol]
-              independentCols <- datasetDF[, input$glm_lin_independentCol]
+              independentCols <- data.frame(datasetDF[, input$glm_lin_independentCol])
               newList <- list(tarData = targetCol, indData = independentCols)
             }
           )
@@ -1235,19 +1235,19 @@ shinyServer(
               colNameVector <- colNameVector[-1]
               tempDF <- cbind(tempDF, ycol)
               tempDF <- tempDF[, -1]
-              
+
               names(tempDF) <- c(colNameVector, "ycol")
 
               tempFit <- glm(as.formula(paste("ycol ~", paste(colNameVector, collapse = "+"))), data = tempDF,family = "gaussian")
               print(summary(tempFit))
-              
+
               coefVector <- c(1)
               if(length(input$glm_lin_independentCol) > 0) {
                 for(i in 1:length(predictList$indData)) {
                   coefVector <- c(coefVector, as.numeric(input[[paste0("col_x", as.character(i))]]))
                 }
               }
-              
+
               estVector <- c(-1)
               for(i in 1:sum(length(colNameVector) + 1)) {
                 if(summary(tempFit)$coef[i,4] <= input$lin_alpha) {
@@ -1256,7 +1256,7 @@ shinyServer(
                   estVector <- c(estVector, 0)
                 }
               }
-              
+
               estVector <- estVector[-1]
               predictedValue <- sum(estVector*coefVector)
               print(paste("Predicted Value:", predictedValue))
@@ -1355,25 +1355,25 @@ shinyServer(
                                 lin_file = {
                                   datasetDF <- glmLinearFile()
                                   targetCol <- datasetDF[, input$glm_lin_targetCol]
-                                  independentCols <- datasetDF[, input$glm_lin_independentCol]
+                                  independentCols <- data.frame(datasetDF[, input$glm_lin_independentCol])
                                   newList <- list(tarData = targetCol, indData = independentCols)
                                 },
                                 lin_url = {
                                   datasetDF <- glmLinearURL()
                                   targetCol <- datasetDF[, input$glm_lin_targetCol]
-                                  independentCols <- na.omit(datasetDF[, input$glm_lin_independentCol])
+                                  independentCols <- data.frame(datasetDF[, input$glm_lin_independentCol])
                                   newList <- list(tarData = targetCol, indData = independentCols)
                                 },
                                 lin_inBuilt = {
                                   datasetDF <- glmLinearInBuilt()
                                   targetCol <- datasetDF[, input$glm_lin_targetCol]
-                                  independentCols <- datasetDF[, input$glm_lin_independentCol]
+                                  independentCols <- data.frame(datasetDF[, input$glm_lin_independentCol])
                                   newList <- list(tarData = targetCol, indData = independentCols)
                                 },
                                 lin_yfin = {
                                   datasetDF <- glmLinearYfin()
                                   targetCol <- datasetDF[, input$glm_lin_targetCol]
-                                  independentCols <- datasetDF[, input$glm_lin_independentCol]
+                                  independentCols <- data.frame(datasetDF[, input$glm_lin_independentCol])
                                   newList <- list(tarData = targetCol, indData = independentCols)
                                 }
           )
@@ -1455,7 +1455,7 @@ shinyServer(
       switch(input$glm_lin_source,
              lin_file = { updateSelectInput(session, "glm_lin_targetCol", choices = colnames(glmLinearFile()))
                           observe({
-                            updateSelectInput(session, "glm_lin_independentCol", choices = colnames(glmLinearInBuilt())[-which(colnames(glmLinearInBuilt()) == input$glm_lin_targetCol)])
+                            updateSelectInput(session, "glm_lin_independentCol", choices = colnames(glmLinearFile())[-which(colnames(glmLinearFile()) == input$glm_lin_targetCol)])
                           }) 
                         },
              lin_url = { updateSelectInput(session, "glm_lin_targetCol", choices = c(""))
@@ -1475,7 +1475,7 @@ shinyServer(
     observe({
       switch(input$glm_lin_source,
              
-             line_file = { 
+             lin_file = { 
                output$glm_lin_tab <- DT::renderDataTable({
                  DT::datatable(glmLinearFile())
                })

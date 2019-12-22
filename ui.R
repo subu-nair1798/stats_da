@@ -9,6 +9,7 @@ library(pdfetch)
 library(caTools)
 library(MASS)
 
+
 dataFrameList <- c("0")
 datasetList <- sort(gsub("\\ .*","",data(package = "datasets")$results[, "Item"]))
 
@@ -54,6 +55,7 @@ shinyUI(
       useShinyalert(),
       useShinyjs(),
       tabItems(
+        
         tabItem(tabName = "dpm_gen",
                 sidebarPanel(
                   selectInput("dpm_gen_input", "Select Model", c("Bernoulli", "Binomial", "Multinomial", "Poisson", "Geometric", "Hypergeometric"), selectize = TRUE),
@@ -100,6 +102,7 @@ shinyUI(
                   )
                 )
                 ),
+        
         tabItem(tabName = "cpm_gen",
                 sidebarPanel(
                   selectInput("cpm_gen_input", "Select Model", c("Uniform", "Normal", "Exponential", "Gamma", "Chi-Squared"), selectize = TRUE),
@@ -144,6 +147,7 @@ shinyUI(
                    )
                 )
                 ),
+        
         tabItem(tabName = "cpm_imp",
                 sidebarPanel(
                   selectInput("cpm_imp_source", "Select Data Source", choices = c("File" = "file", "URL" = "url", "In-Built" = "inBuilt")),
@@ -182,6 +186,7 @@ shinyUI(
                                )
                 )
                 ),
+        
         tabItem(tabName = "ht_mean",
                 sidebarPanel(
                   selectInput("ht_mean_source", "Select Data Source", choices = c("User Input" = "mean_input", "File" = "mean_file", "URL" = "mean_url", "In-Built" = "mean_inBuilt", "Yahoo Finance" = "mean_yfin")),
@@ -237,6 +242,7 @@ shinyUI(
                   )
                 )
                 ),
+        
         tabItem(tabName = "glm_lin",
                 sidebarPanel(
                   selectInput("glm_lin_source", "Select Data Source", choices = c("File" = "lin_file", "URL" = "lin_url", "In Built" = "lin_inBuilt", "Yahoo Finance" = "lin_yfin")),
@@ -288,6 +294,7 @@ shinyUI(
                   )
                 )
                 )
+        
       )
     )
   )
