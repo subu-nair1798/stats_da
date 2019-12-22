@@ -1291,7 +1291,7 @@ shinyServer(
                   testSet <- tempDF[-indexes,]
                   
                   full_model <- glm(trainSet$ycol ~. , data = trainSet, family = "gaussian")
-                  predFull <- predict(full_model, testSet[, 1:(length(testSet) - 1)])
+                  predFull <- predict(full_model, testSet[1:(length(testSet) - 1)])
                   actualVal <- testSet[, "ycol"]
                   valueDF <- data.frame("Predicted_Value" = predFull, "Actual_Value" = actualVal)
                   rmse_full <- sqrt(sum((predFull - actualVal)^2)/nrow(testSet))
@@ -1315,7 +1315,7 @@ shinyServer(
                   
                   full_model <- glm(trainSet$ycol ~. , data = trainSet, family = "gaussian")
                   red_model <- stepAIC(full_model, trace = FALSE)
-                  predRed <- predict(red_model, testSet[, 1:(length(testSet) - 1)])
+                  predRed <- predict(red_model, testSet[1:(length(testSet) - 1)])
                   actualVal <- testSet[, "ycol"]
                   valueDF <- data.frame("Predicted_Value" = predRed, "Actual_Value" = actualVal)
                   rmse_red <- sqrt(sum((predRed - actualVal)^2)/nrow(testSet))
@@ -1414,7 +1414,7 @@ shinyServer(
                         testSet <- tempDF[-indexes,]
                         
                         full_model <- glm(trainSet$ycol ~. , data = trainSet, family = "gaussian")
-                        predFull <- predict(full_model, testSet[, 1:(length(testSet) - 1)])
+                        predFull <- predict(full_model, testSet[1:(length(testSet) - 1)])
                         actualVal <- testSet[, "ycol"]
                       }
                       
@@ -1436,7 +1436,7 @@ shinyServer(
                         
                         full_model <- glm(trainSet$ycol ~. , data = trainSet, family = "gaussian")
                         red_model <- stepAIC(full_model, trace = FALSE)
-                        predRed <- predict(red_model, testSet[, 1:(length(testSet) - 1)])
+                        predRed <- predict(red_model, testSet[1:(length(testSet) - 1)])
                         actualVal <- testSet[, "ycol"]
                       }
                       
