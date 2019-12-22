@@ -45,9 +45,8 @@ shinyUI(
         menuItem("Hypothesis Testing", tabName = "ht",
                  menuSubItem("Test of Mean", tabName = "ht_mean", icon = icon("minus"))
                  ),
-        menuItem("Generalized Linear Models", tabName = "glm",
-                 menuSubItem("Linear Regression", tabName = "glm_lin", icon = icon("minus")),
-                 menuSubItem("Logistic Regression", tabName = "glm_log", icon = icon("minus"))
+        menuItem("Generalized Linear Model", tabName = "glm",
+                 menuSubItem("Linear Regression", tabName = "glm_lin", icon = icon("minus"))
                  )
       )
     ),

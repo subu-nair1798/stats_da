@@ -1225,6 +1225,7 @@ shinyServer(
               
               colNameVector <- c("-1")
               tempDF <- data.frame(rep(0, length(predictList$tarData)))
+              
               for(i in 1:length(predictList$indData)) {
                 colNameVector <- c(colNameVector, paste0("xcol", i))
                 assign(paste0("xcol", i), predictList$indData[, i])
@@ -1246,6 +1247,7 @@ shinyServer(
                   coefVector <- c(coefVector, as.numeric(input[[paste0("col_x", as.character(i))]]))
                 }
               }
+              
               estVector <- c(-1)
               for(i in 1:sum(length(colNameVector) + 1)) {
                 if(summary(tempFit)$coef[i,4] <= input$lin_alpha) {
@@ -1264,6 +1266,7 @@ shinyServer(
               
               colNameVector <- c("-1")
               tempDF <- data.frame(rep(0, length(predictList$tarData)))
+              
               for(i in 1:length(predictList$indData)) {
                 colNameVector <- c(colNameVector, paste0("xcol", i))
                 assign(paste0("xcol", i), predictList$indData[, i])
@@ -1386,6 +1389,7 @@ shinyServer(
                     
                     colNameVector <- c("-1")
                     tempDF <- data.frame(rep(0, length(plotList$tarData)))
+                    
                     for(i in 1:length(plotList$indData)) {
                       colNameVector <- c(colNameVector, paste0("xcol", i))
                       assign(paste0("xcol", i), plotList$indData[, i])
@@ -1416,7 +1420,7 @@ shinyServer(
                       
                       plot(actualVal, type = "o", col = "red", xlab = "Observations", ylab = input$glm_lin_targetCol, main = "Full Model")
                       lines(predFull, type = "o", col = "blue")
-                      legend(9, 93, legend = c("Actual Value", "Predicted Value"),
+                      legend("topright", legend = c("Actual Value", "Predicted Value"),
                              col = c("red", "blue"), lty = 1:2, cex = 0.6)
                       
                     } else if(input$glm_lin_rb == "modelInput_red") {
@@ -1438,7 +1442,7 @@ shinyServer(
                       
                       plot(actualVal, type = "o", col = "red", xlab = "Observations", ylab = input$glm_lin_targetCol, main = "Full Model")
                       lines(predRed, type = "o", col = "blue")
-                      legend(1, 95, legend = c("Actual Value", "Predicted Value"),
+                      legend("topright", legend = c("Actual Value", "Predicted Value"),
                              col = c("red", "blue"), lty = 1:2, cex = 0.6)
                     }
                   }
@@ -1452,15 +1456,19 @@ shinyServer(
              lin_file = { updateSelectInput(session, "glm_lin_targetCol", choices = colnames(glmLinearFile()))
                           observe({
                             updateSelectInput(session, "glm_lin_independentCol", choices = colnames(glmLinearInBuilt())[-which(colnames(glmLinearInBuilt()) == input$glm_lin_targetCol)])
-                          }) },
+                          }) 
+                        },
              lin_url = { updateSelectInput(session, "glm_lin_targetCol", choices = c(""))
-                         updateSelectInput(session, "glm_lin_independentCol", choices = c("")) },
+                         updateSelectInput(session, "glm_lin_independentCol", choices = c("")) 
+                       },
              lin_inBuilt = { updateSelectInput(session, "glm_lin_targetCol", choices = colnames(glmLinearInBuilt()))
                              observe({
                                updateSelectInput(session, "glm_lin_independentCol", choices = colnames(glmLinearInBuilt())[-which(colnames(glmLinearInBuilt()) == input$glm_lin_targetCol)])
-                             }) },
+                             }) 
+                           },
              lin_yfin = { updateSelectInput(session, "glm_lin_targetCol", choices = c(""))
-                          updateSelectInput(session, "glm_lin_independentCol", choices = c("")) }
+                          updateSelectInput(session, "glm_lin_independentCol", choices = c("")) 
+                        }
       )
     })
 
