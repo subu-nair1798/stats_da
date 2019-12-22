@@ -1222,6 +1222,7 @@ shinyServer(
           switch (input$glm_lin_type,
                   
             glm_lin_func = {
+              
               colNameVector <- c("-1")
               tempDF <- data.frame(rep(0, length(predictList$tarData)))
               for(i in 1:length(predictList$indData)) {
@@ -1240,7 +1241,7 @@ shinyServer(
               print(summary(tempFit))
               
               coefVector <- c(1)
-              if(input$mnom_k > 0) {
+              if(length(input$glm_lin_independentCol) > 0) {
                 for(i in 1:length(predictList$indData)) {
                   coefVector <- c(coefVector, as.numeric(input[[paste0("col_x", as.character(i))]]))
                 }
@@ -1261,26 +1262,189 @@ shinyServer(
             },
             glm_lin_rmse = {
               
-            },
-            glm_lin_cmat = {
+              colNameVector <- c("-1")
+              tempDF <- data.frame(rep(0, length(predictList$tarData)))
+              for(i in 1:length(predictList$indData)) {
+                colNameVector <- c(colNameVector, paste0("xcol", i))
+                assign(paste0("xcol", i), predictList$indData[, i])
+                tempDF <- cbind(tempDF, get(paste0("xcol", i)))
+              }
+              ycol <- as.vector(predictList$tarData)
+              colNameVector <- colNameVector[-1]
+              tempDF <- cbind(tempDF, ycol)
+              tempDF <- tempDF[, -1]
               
+              names(tempDF) <- c(colNameVector, "ycol")
+              
+              if(input$glm_lin_rb == "modelInput_full") {
+                
+                rmse_avg <- 0
+                
+                for(i in 1:input$glm_lin_mc) {
+                  n <- nrow(tempDF)
+                  set.seed(1798)
+                  indexes <- sample(n , n*(input$glm_lin_dataSplit/100))
+                  trainSet <- tempDF[indexes,]
+                  testSet <- tempDF[-indexes,]
+                  
+                  full_model <- glm(trainSet$ycol ~. , data = trainSet, family = "gaussian")
+                  predFull <- predict(full_model, testSet[, 1:(length(testSet) - 1)])
+                  actualVal <- testSet[, "ycol"]
+                  valueDF <- data.frame("Predicted_Value" = predFull, "Actual_Value" = actualVal)
+                  rmse_full <- sqrt(sum((predFull - actualVal)^2)/nrow(testSet))
+                  
+                  rmse_avg <- rmse_avg + rmse_full
+                }
+                
+                print(valueDF)
+                print(paste("RMSE Full Model :", rmse_avg/input$glm_lin_mc))
+                
+              } else if(input$glm_lin_rb == "modelInput_red") {
+                
+                rmse_avg <- 0
+                
+                for(i in 1:input$glm_lin_mc) {
+                  n <- nrow(tempDF)
+                  set.seed(1798)
+                  indexes <- sample(n , n*(input$glm_lin_dataSplit/100))
+                  trainSet <- tempDF[indexes,]
+                  testSet <- tempDF[-indexes,]
+                  
+                  full_model <- glm(trainSet$ycol ~. , data = trainSet, family = "gaussian")
+                  red_model <- stepAIC(full_model, trace = FALSE)
+                  predRed <- predict(red_model, testSet[, 1:(length(testSet) - 1)])
+                  actualVal <- testSet[, "ycol"]
+                  valueDF <- data.frame("Predicted_Value" = predRed, "Actual_Value" = actualVal)
+                  rmse_red <- sqrt(sum((predRed - actualVal)^2)/nrow(testSet))
+                  
+                  rmse_avg <- rmse_avg + rmse_red
+                }
+                
+                print(valueDF)
+                print(paste("RMSE Reduced Model :", rmse_avg/input$glm_lin_mc))
+              }
             }
           )
         })
       })
       
-      output$glm_lin_plot <- renderPlot({
+      output$glm_lin_plotMessage <- renderText({
         
         input$glm_lin_btn
         isolate({
-          
+          switch (input$glm_lin_type,
+                  
+                  glm_lin_func = {
+                    print("No Plot to display")
+                  },
+                  glm_lin_rmse = {
+                    print("")
+                  }
+          )
         })
       })
       
-      output$glm_lin_plotMessage <- renderPlot({
-        
+      output$glm_lin_plot <- renderPlot({
+
+        input$glm_lin_btn
+        isolate({
+          plotList <- switch(input$glm_lin_source,
+                                lin_file = {
+                                  datasetDF <- glmLinearFile()
+                                  targetCol <- datasetDF[, input$glm_lin_targetCol]
+                                  independentCols <- datasetDF[, input$glm_lin_independentCol]
+                                  newList <- list(tarData = targetCol, indData = independentCols)
+                                },
+                                lin_url = {
+                                  datasetDF <- glmLinearURL()
+                                  targetCol <- datasetDF[, input$glm_lin_targetCol]
+                                  independentCols <- na.omit(datasetDF[, input$glm_lin_independentCol])
+                                  newList <- list(tarData = targetCol, indData = independentCols)
+                                },
+                                lin_inBuilt = {
+                                  datasetDF <- glmLinearInBuilt()
+                                  targetCol <- datasetDF[, input$glm_lin_targetCol]
+                                  independentCols <- datasetDF[, input$glm_lin_independentCol]
+                                  newList <- list(tarData = targetCol, indData = independentCols)
+                                },
+                                lin_yfin = {
+                                  datasetDF <- glmLinearYfin()
+                                  targetCol <- datasetDF[, input$glm_lin_targetCol]
+                                  independentCols <- datasetDF[, input$glm_lin_independentCol]
+                                  newList <- list(tarData = targetCol, indData = independentCols)
+                                }
+          )
+
+          switch (input$glm_lin_type,
+                  
+                  glm_lin_func = {
+                    
+                    par(bg = "#ecf0f5")
+                    plot.new()
+                  },
+                  glm_lin_rmse = {
+                    
+                    colNameVector <- c("-1")
+                    tempDF <- data.frame(rep(0, length(plotList$tarData)))
+                    for(i in 1:length(plotList$indData)) {
+                      colNameVector <- c(colNameVector, paste0("xcol", i))
+                      assign(paste0("xcol", i), plotList$indData[, i])
+                      tempDF <- cbind(tempDF, get(paste0("xcol", i)))
+                    }
+                    ycol <- as.vector(plotList$tarData)
+                    colNameVector <- colNameVector[-1]
+                    tempDF <- cbind(tempDF, ycol)
+                    tempDF <- tempDF[, -1]
+                    
+                    names(tempDF) <- c(colNameVector, "ycol")
+                    
+                    if(input$glm_lin_rb == "modelInput_full") {
+                      
+                      rmse_avg <- 0
+                      
+                      for(i in 1:input$glm_lin_mc) {
+                        n <- nrow(tempDF)
+                        set.seed(1798)
+                        indexes <- sample(n , n*(input$glm_lin_dataSplit/100))
+                        trainSet <- tempDF[indexes,]
+                        testSet <- tempDF[-indexes,]
+                        
+                        full_model <- glm(trainSet$ycol ~. , data = trainSet, family = "gaussian")
+                        predFull <- predict(full_model, testSet[, 1:(length(testSet) - 1)])
+                        actualVal <- testSet[, "ycol"]
+                      }
+                      
+                      plot(actualVal, type = "o", col = "red", xlab = "Observations", ylab = input$glm_lin_targetCol, main = "Full Model")
+                      lines(predFull, type = "o", col = "blue")
+                      legend(9, 93, legend = c("Actual Value", "Predicted Value"),
+                             col = c("red", "blue"), lty = 1:2, cex = 0.6)
+                      
+                    } else if(input$glm_lin_rb == "modelInput_red") {
+                      
+                      rmse_avg <- 0
+                      
+                      for(i in 1:input$glm_lin_mc) {
+                        n <- nrow(tempDF)
+                        set.seed(1798)
+                        indexes <- sample(n , n*(input$glm_lin_dataSplit/100))
+                        trainSet <- tempDF[indexes,]
+                        testSet <- tempDF[-indexes,]
+                        
+                        full_model <- glm(trainSet$ycol ~. , data = trainSet, family = "gaussian")
+                        red_model <- stepAIC(full_model, trace = FALSE)
+                        predRed <- predict(red_model, testSet[, 1:(length(testSet) - 1)])
+                        actualVal <- testSet[, "ycol"]
+                      }
+                      
+                      plot(actualVal, type = "o", col = "red", xlab = "Observations", ylab = input$glm_lin_targetCol, main = "Full Model")
+                      lines(predRed, type = "o", col = "blue")
+                      legend(1, 95, legend = c("Actual Value", "Predicted Value"),
+                             col = c("red", "blue"), lty = 1:2, cex = 0.6)
+                    }
+                  }
+          )
+        })
       })
-      
     })
     
     observe({
@@ -1325,7 +1489,6 @@ shinyServer(
              }
       )
     })
-    
   
   }
 )

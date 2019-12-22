@@ -43,8 +43,7 @@ shinyUI(
                  menuSubItem("Generate Data", tabName = "cpm_gen", icon = icon("minus"))
                  ),
         menuItem("Hypothesis Testing", tabName = "ht",
-                 menuSubItem("Test of Mean", tabName = "ht_mean", icon = icon("minus")),
-                 menuSubItem("Test of Variance", tabName = "ht_var", icon = icon("minus"))
+                 menuSubItem("Test of Mean", tabName = "ht_mean", icon = icon("minus"))
                  ),
         menuItem("Generalized Linear Models", tabName = "glm",
                  menuSubItem("Linear Regression", tabName = "glm_lin", icon = icon("minus")),
@@ -268,12 +267,15 @@ shinyUI(
                                    ),
                   selectInput("glm_lin_targetCol", "Select Target Variable", choices = ""),
                   selectInput("glm_lin_independentCol", "Select Independent Variable(s)", choices = "", multiple = TRUE),
-                  selectInput("glm_lin_type", "Select Method", choices = c("Link Function" = "glm_lin_func", "RMSE" = "glm_lin_rmse", "Confusion Matrix" = "glm_lin_cmat")),
+                  selectInput("glm_lin_type", "Select Method", choices = c("Link Function" = "glm_lin_func", "Train-Test split" = "glm_lin_rmse")),
                   conditionalPanel(condition = "input.glm_lin_type == 'glm_lin_func'",
                                    uiOutput("linkFunc_ui")
                                    ),
                   conditionalPanel(condition = "input.glm_lin_type != 'glm_lin_func'",
-                                   sliderInput("glm_lin_dataSplit", "Train - Test Data Split", value = 80, min = 0, max = 100, step = 1),
+                                   sliderInput("glm_lin_dataSplit", "Train-Test Data Split", value = 80, min = 1, max = 99, step = 1),
+                                   radioButtons("glm_lin_rb", "Model : ",
+                                                c("Full Model" = "modelInput_full",
+                                                  "Reduced Model" = "modelInput_red")),
                                    numericInput("glm_lin_mc", "Monte-Carlo Simulation", value = 1000)
                                    ),
                   sliderInput("lin_alpha", "Significance level : α", value = 0.05, min = 0, max = 0.25, step = 0.001),
@@ -283,7 +285,7 @@ shinyUI(
                   tabsetPanel(type = "pills",
                               tabPanel("Table", hr(), DT::dataTableOutput("glm_lin_tab")),
                               tabPanel("Predicted Value", hr(), verbatimTextOutput("glm_lin_pred")),
-                              tabPanel("Plot", hr(), plotOutput("glm_lin_plot"), textOutput("glm_lin_plotMessage"))
+                              tabPanel("Plot", hr(), textOutput("glm_lin_plotMessage"), plotOutput("glm_lin_plot"))
                   )
                 )
                 )
